@@ -122,12 +122,17 @@ with open(f'{output}/cluster.csv', 'w') as fo:
                     if line == '':
                         break
                     fo.write(line)
+
+subprocess.run(f"awk -F',' -v OFS=' ' '{{print $1, $2-1, $3}}' {output}/cluster.csv > {output}/location.bed",shell=True)
+subprocess.run(f"seqtk subseq {input} {output}/location.bed > {output}/prophage.fasta",shell=True)
+subprocess.run(f"prodigal -i {output}/prophage.fasta -a {output}/prophage.faa -p meta -q",shell=True)
+
 end =  time.perf_counter()
 run_time = round(end-start)
 hour = run_time // 3600
 minute = (run_time - 3600 * hour) // 60
 second = run_time - 3600 * hour - 60 * minute
+
 for i in range(num):
-    subprocess.run(f'rm -rf {output}/{i}*', shell=True)
-print(f'All finish, use time: {hour}h{minute}m{second}s')
-   
+    subprocess.run(f'rm -rf {output}/{i}* {output}/location.bed', shell=True)
+print(f'All finish, use time: {hour}h{minute}m{second}s')   
