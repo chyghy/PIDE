@@ -124,7 +124,7 @@ with open(f'{output}/cluster.csv', 'w') as fo:
                     fo.write(line)
 
 subprocess.run(f"awk -F',' -v OFS=' ' '{{print $1, $2-1, $3}}' {output}/cluster.csv > {output}/location.bed",shell=True)
-subprocess.run(f"seqtk subseq {input} {output}/location.bed > {output}/prophage.fasta",shell=True)
+subprocess.run(f"seqtk subseq {args.input} {output}/location.bed > {output}/prophage.fasta",shell=True)
 subprocess.run(f"prodigal -i {output}/prophage.fasta -a {output}/prophage.faa -p meta -q",shell=True)
 
 end =  time.perf_counter()
