@@ -27,6 +27,8 @@ conda install pytorch torchvision torchaudio cpuonly -c pytorch
 
 If you want to use the GPU version, please go to https://pytorch.org/get-started and get the conda or pip install command according to your device and demand.
 
+⚠️ The GPU version of PIDE does not currently support macOS systems with Apple Silicon (M-series) chips by default. It is recommended to use the CPU version directly, or modify the relevant code to enable GPU support on M-series Macs.
+
 b, fair-esm
 
 ``` 
