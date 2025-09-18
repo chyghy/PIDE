@@ -10,6 +10,9 @@ from token_esm import get_token
 from binary_esm import binary_test
 from cluster_esm import cluster_start
 import model
+from pathlib import Path
+import shutil
+import csv
 
 start = time.perf_counter()
 
@@ -30,8 +33,7 @@ output = args.output
 if output[-1] == '/':
     output = output[:-1]
 
-if os.path.exists(output) is False:
-    subprocess.run(f"mkdir {output}", shell=True)
+os.makedirs(output, exist_ok=True)
 
 #ORF ratio threshold
 thresholds = {
@@ -82,9 +84,30 @@ print('Process 4: Predict prophage islands and virus contigs')
 for i in range(num):
     df = get_token(f"{output}/{i}.faa")
     binary_test(df, esmorf, device, f'{output}/{i}.Predict.csv', f'{output}/{i}.Max.csv',args.BatchSize)
-    subprocess.run(f"grep '>' {output}/{i}.faa | awk -F '#' -v OFS=',' '{{print $1, $2, $3}}' | sed 's/>//g' | sed 's/ //g' > {output}/{i}_tmp0",shell=True)
-    subprocess.run(f"awk -F ',' -v OFS=',' 'NR > 1 {{print 1-$2,$2 }}' {output}/{i}.Predict.csv > {output}/{i}_tmp1",shell=True)
-    subprocess.run(f"paste -d ',' {output}/{i}_tmp0 {output}/{i}_tmp1|sed '1i ORF,Start,End,B,P' > {output}/{i}.bed",shell=True)
+
+    with open(f"{output}/{i}.faa") as fin, open(f"{output}/{i}_tmp0", "w", newline="") as fout:
+        writer = csv.writer(fout)
+        for line in fin:
+            if line.startswith(">"):
+                parts = line.strip().replace(">", "").replace(" ", "").split("#")
+                writer.writerow(parts[:3])
+    
+    with open(f"{output}/{i}.Predict.csv") as fin, open(f"{output}/{i}_tmp1", "w", newline="") as fout:
+        reader = csv.reader(fin)
+        writer = csv.writer(fout)
+        next(reader)
+        for row in reader:
+            val = float(row[1])
+            writer.writerow([1 - val, val])
+
+    with open(f"{output}/{i}_tmp0") as f1, open(f"{output}/{i}_tmp1") as f2, open(f"{output}/{i}.bed", "w", newline="") as fout:
+        writer = csv.writer(fout)
+        writer.writerow(["ORF", "Start", "End", "B", "P"])
+        for line1, line2 in zip(f1, f2):
+            row1 = line1.strip().split(",")
+            row2 = line2.strip().split(",")
+            writer.writerow(row1 + row2)
+            
     cluster_start(f'{output}/{i}.bed', f'{output}/{i}.cluster', args.MinPNum, args.Distance, args.PIScore)
 
     #phage contig
@@ -123,7 +146,10 @@ with open(f'{output}/cluster.csv', 'w') as fo:
                         break
                     fo.write(line)
 
-subprocess.run(f"awk -F',' -v OFS=' ' '{{print $1, $2-1, $3}}' {output}/cluster.csv > {output}/location.bed",shell=True)
+
+with open(f"{output}/cluster.csv") as fin, open(f"{output}/location.bed", "w") as fout:
+    for row in (line.strip().split(",") for line in fin):
+        fout.write(f"{row[0]} {int(row[1])-1} {row[2]}\n")
 subprocess.run(f"seqtk subseq {args.input} {output}/location.bed > {output}/prophage.fasta",shell=True)
 subprocess.run(f"prodigal -i {output}/prophage.fasta -a {output}/prophage.faa -p meta -o {output}/prophage.gbk -q",shell=True)
 
@@ -133,6 +159,11 @@ hour = run_time // 3600
 minute = (run_time - 3600 * hour) // 60
 second = run_time - 3600 * hour - 60 * minute
 
-for i in range(num):
-    subprocess.run(f'rm -rf {output}/{i}* {output}/location.bed {output}/prophage.gbk', shell=True)
+def clean_output(output, num):
+    out = Path(output)
+    for pattern in [*(f"{i}*" for i in range(num)), "location.bed", "prophage.gbk"]:
+        for p in out.glob(pattern):
+            shutil.rmtree(p, ignore_errors=True) if p.is_dir() else p.unlink(missing_ok=True)
+clean_output(output, num) 
+
 print(f'All finish, use time: {hour}h{minute}m{second}s')   
