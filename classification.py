@@ -153,7 +153,7 @@ second = run_time - 3600 * hour - 60 * minute
 
 def clean_output(output, num):
     out = Path(output)
-    for pattern in [*(f"{i}*" for i in range(num)), "location.bed", "prophage.gbk"]:
+    for pattern in (f"{i}*" for i in range(num)):
         for p in out.glob(pattern):
             shutil.rmtree(p, ignore_errors=True) if p.is_dir() else p.unlink(missing_ok=True)
 clean_output(output, num)           
