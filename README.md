@@ -89,9 +89,9 @@ optional arguments:
   -h, --help            Show this help message
   -o OUTPUT, --output OUTPUT
                         Path of the output directory
-  -g GPU, --GPU GPU     Determine which GPU(s) to use. If this parameter is not used, the 												GPU is used by default. Multi-GPU is also supported, IDs of 															different GPUs are separated by commas
+  -g GPU, --GPU GPU     Determine which GPU(s) to use. If this parameter is not used, the GPU is used by default. Multi-GPU is also supported, IDs of different GPUs are separated by commas
   -b BATCHSIZE, --BatchSize BATCHSIZE
-                        Define the batch size used in the prediction(default is 2). Note 													that the batch size cannot be negative and should not be smaller 													than the number of GPUs used
+                        Define the batch size used in the prediction(default is 2). Note that the batch size cannot be negative and should not be smaller than the number of GPUs used
   -n MINPNUM, --MinPNum MINPNUM
                         The min prophage ORF number of a PI (default is 5)
   -d DISTANCE, --Distance DISTANCE
