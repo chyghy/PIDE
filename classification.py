@@ -82,6 +82,10 @@ print('Process 3 finish')
 
 print('Process 4: Predict prophage islands and virus contigs')
 for i in range(num):
+    faa_file = Path(f"{output}/{i}.faa")
+    if not faa_file.exists() or faa_file.stat().st_size == 0:
+        print(f"Skip empty file: {faa_file}")
+        continue
     df = get_token(f"{output}/{i}.faa")
     binary_test(df, esmorf, device, f'{output}/{i}.Predict.csv', f'{output}/{i}.Max.csv',args.BatchSize)
     
